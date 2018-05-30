@@ -88,9 +88,8 @@ class StarterBot:
                            'destroyMultiplier'],
                        "constructionScore": self.game_state['gameDetails']['buildingsStats']['ENERGY'][
                            'constructionScore']}}
-        self.board_state = BoardSate.EMPTY
-        self.energy_full = False
-        self.defence_full = False
+        self.energy_score = 0
+        self.attack_score = 0
         return None
 
     def loadState(self, state_location):
@@ -239,88 +238,34 @@ class StarterBot:
 
         return indexes
 
-    def getBoardState(self):
-        num_empty = 0
-        num_attack = 0
-        for line in self.opponent_buildings:
-            for spot in line:
-                if spot == 0:
-                    num_empty += 1
-                if spot == 2:
-                    num_attack += 1
-        if num_empty == self.rows * (self.columns / 2):
-            self.board_state = BoardSate.EMPTY
-        elif num_attack == 0:
-            self.board_state = BoardSate.SAFE
-        elif num_attack < self.rows:
-            self.board_state = BoardSate.CONTESTED
-        elif num_attack >= self.rows:
-            self.board_state = BoardSate.DANGER
-
-    def getUnOccupiedSpot(self, x_index, building):
-        if x_index == self.columns / 2:
-            self.board_state = BoardSate.FULL
-            return 0, 0
-        for y, line in enumerate(self.player_buildings):
-            for x, spot in enumerate(line):
-                if x != x_index:
-                    continue
-                else:
-                    if spot == 0:
-                        return x, y
-                    else:
-                        break
-        if building == 2:
-            self.energy_full = True
-            return -1, -1
-        if building == 0:
-            self.defence_full = True
-            return -1, -1
-        return -1, -1
+    def getScore(self):
+        self.attack_score = self.buildings_stats['ATTACK']['weaponDamage']
+        self.energy_score = self.buildings_stats['ENERGY']['energyGeneratedPerTurn'] * self.buildings_stats['ATTACK']['weaponCooldownPeriod']
+        if self.energy_score > self.attack_score:
+            return 'ENERGY'
+        else:
+            return 'ATTACK'
 
     def generateAction(self):
-        self.getBoardState()
-        if self.board_state == BoardSate.EMPTY:
+        if self.getScore() == 'ENERGY':
+            if self.player_info['energy'] >= self.buildings_stats['DEFENSE']['price']:
+                for i, lane in enumerate(self.player_buildings):
+                    if self.CheckAttack(i) is True and self.checkMyDefense(i) is False:
+                        x_list = self.getUnOccupied(lane)
+                        if len(x_list) > 0:
+                            x = max(x_list)
+                            self.writeCommand(x, i, 0)
+                            return
             if self.player_info['energy'] >= self.buildings_stats['ENERGY']['price']:
-                x, y, = self.getUnOccupiedSpot(0, 2)
-                if x != -1 or y != -1:
-                    self.writeCommand(x, y, 2)
-                elif self.player_info['energy'] >= self.buildings_stats['ATTACK']['price']:
-                    i = 0
-                    while i < self.columns / 2 and x == -1 or y == -1:
-                        x, y, = self.getUnOccupiedSpot(i, 1)
-                        i += 1
-                    if x != -1 or y != -1:
-                        self.writeCommand(x, y, 1)
-            else:
-                self.writeDoNothing()
-        if self.board_state == BoardSate.SAFE:
-                if self.player_info['energy'] >= self.buildings_stats['ATTACK']['price']:
-                    x, y, = self.getUnOccupiedSpot(0, 1)
-                    if x != -1 or y != -1:
-                        self.writeCommand(x, y, 1)
-                    elif self.player_info['energy'] >= self.buildings_stats['ENERGY']['price']:
-                        x, y, = self.getUnOccupiedSpot(1, 2)
-                        self.writeCommand(x, y, 2)
-                    else:
-                        self.writeDoNothing()
-        if self.board_state == BoardSate.CONTESTED:
-                if self.player_info['energy'] >= self.buildings_stats['ATTACK']['price']:
-                    x, y, = self.getUnOccupiedSpot(1, 1)
-                    if x != -1 or y != -1:
-                        self.writeCommand(x, y, 1)
-                    elif self.player_info['energy'] >= self.buildings_stats['DEFENCE']['price']:
-                        x, y, = self.getUnOccupiedSpot(self.columns - 1, 0)
-                        self.writeCommand(x, y, 0)
-                    else:
-                        self.writeDoNothing()
-        if self.board_state == BoardSate.DANGER:
-            if self.player_info['energy'] >= self.buildings_stats['DEFENCE']['price']:
-                x, y, = self.getUnOccupiedSpot(0, 0)
-                if x != -1 or y != -1:
-                    self.writeCommand(x, y, 0)
-                else:
-                    self.writeDoNothing()
+                for i, lane in enumerate(self.player_buildings):
+                    x_list = self.getUnOccupied(lane)
+                    if len(x_list) > 0:
+                        x = min(x_list)
+                        self.writeCommand(x, i, 2)
+                        return
+            self.writeDoNothing()
+        else:
+            self.writeDoNothing()
 
 
     def writeCommand(self, x, y, building):
