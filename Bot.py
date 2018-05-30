@@ -214,6 +214,13 @@ class StarterBot:
         else:
             return False
 
+    def checkMyAttack(self, lane_number):
+        lane = list(self.player_buildings[lane_number])
+        if lane.count(1) > 0:
+            return True
+        else:
+            return False
+
     def CheckAttack(self, lane_number):
 
         '''
@@ -262,13 +269,19 @@ class StarterBot:
                             x = max(x_list)
                             self.writeCommand(x, i, 0)
                             return
+                    elif self.checkMyAttack(i) is False:
+                        x_list = self.getUnOccupied(lane)
+                        if len(x_list) > 0:
+                            x = max(x_list)
+                            self.writeCommand(x, i, 1)
+                            return
             if self.player_info['energy'] >= self.buildings_stats['ENERGY']['price']:
                 if self.getEmptyLaneNumber() != -1:
                     i = self.getEmptyLaneNumber()
                     x_list = self.getUnOccupied(self.player_buildings[i])
                     x = min(x_list)
                     self.writeCommand(x, i, 2)
-                    return 
+                    return
                 for i, lane in enumerate(self.player_buildings):
                     x_list = self.getUnOccupied(lane)
                     if len(x_list) > 0:
