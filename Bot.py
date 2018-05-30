@@ -238,6 +238,12 @@ class StarterBot:
 
         return indexes
 
+    def getEmptyLaneNumber(self):
+        for i, lane in enumerate(self.player_buildings):
+            if len(self.getUnOccupied(lane)) == 4:
+                return i
+        return -1
+
     def getScore(self):
         self.attack_score = self.buildings_stats['ATTACK']['weaponDamage']
         self.energy_score = self.buildings_stats['ENERGY']['energyGeneratedPerTurn'] * self.buildings_stats['ATTACK']['weaponCooldownPeriod']
@@ -257,6 +263,12 @@ class StarterBot:
                             self.writeCommand(x, i, 0)
                             return
             if self.player_info['energy'] >= self.buildings_stats['ENERGY']['price']:
+                if self.getEmptyLaneNumber() != -1:
+                    i = self.getEmptyLaneNumber()
+                    x_list = self.getUnOccupied(self.player_buildings[i])
+                    x = min(x_list)
+                    self.writeCommand(x, i, 2)
+                    return 
                 for i, lane in enumerate(self.player_buildings):
                     x_list = self.getUnOccupied(lane)
                     if len(x_list) > 0:
