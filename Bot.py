@@ -234,6 +234,17 @@ class StarterBot:
         else:
             return False
 
+    def getUnOccupiedDefence(self):
+        '''
+        Returns index of all unoccupied cells in a lane
+        '''
+        indexes = []
+        for i, lane in enumerate(self.opponent_buildings):
+            if 2 in lane:
+                indexes.append(i)
+
+        return indexes
+
     def getUnOccupied(self, lane):
         '''
         Returns index of all unoccupied cells in a lane
@@ -263,16 +274,15 @@ class StarterBot:
         if self.getScore() == 'ENERGY':
             if self.player_info['energy'] >= self.buildings_stats['DEFENSE']['price']:
                 for i, lane in enumerate(self.player_buildings):
+                    x_list = self.getUnOccupied(lane)
                     if self.CheckAttack(i) is True and self.checkMyDefense(i) is False:
-                        x_list = self.getUnOccupied(lane)
                         if len(x_list) > 0:
                             x = max(x_list)
                             self.writeCommand(x, i, 0)
                             return
                     elif self.checkMyAttack(i) is False:
-                        x_list = self.getUnOccupied(lane)
                         if len(x_list) > 0:
-                            x = max(x_list)
+                            x = min(x_list)
                             self.writeCommand(x, i, 1)
                             return
             if self.player_info['energy'] >= self.buildings_stats['ENERGY']['price']:
