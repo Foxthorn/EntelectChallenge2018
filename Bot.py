@@ -283,39 +283,35 @@ class StarterBot:
         self.writeCommand(x, y, 2)
 
     def generateAction(self):
-        if self.getScore() == 'ENERGY':
-            if self.player_info['energy'] >= self.buildings_stats['DEFENSE']['price']:
-                for i, lane in enumerate(self.player_buildings):
-                    x_list = self.getUnOccupied(lane)
-                    if self.CheckAttack(i) is True and self.checkMyDefense(i) is False:
-                        if len(x_list) > 0:
-                            self.buildDefense(x_list, i)
-                            return
-                    elif self.checkMyAttack(i) is False:
-                        if len(x_list) > 0:
-                            self.buildAttack(x_list, i)
-                            return
-            if self.buildings_stats['ENERGY']['price'] <= self.player_info['energy'] <= 500:
-                if self.getEmptyLaneNumber() != -1:
-                    i = self.getEmptyLaneNumber()
-                    x_list = self.getUnOccupied(self.player_buildings[i])
-                    self.buildEnergy(x_list, i)
-                    return
-                for i, lane in enumerate(self.player_buildings):
-                    x_list = self.getUnOccupied(lane)
+        if self.player_info['energy'] >= self.buildings_stats['DEFENSE']['price']:
+            for i, lane in enumerate(self.player_buildings):
+                x_list = self.getUnOccupied(lane)
+                if self.CheckAttack(i) is True and self.checkMyDefense(i) is False:
                     if len(x_list) > 0:
-                        self.buildEnergy(x_list, i)
+                        self.buildDefense(x_list, i)
                         return
-            elif self.buildings_stats['ATTACK']['price'] <= self.player_info['energy']:
-                for i, lane in enumerate(self.player_buildings):
-                    x_list = self.getUnOccupied(lane)
+                elif self.checkMyAttack(i) is False:
                     if len(x_list) > 0:
                         self.buildAttack(x_list, i)
                         return
-            self.writeDoNothing()
-        else:
-            self.writeDoNothing()
-
+        if self.buildings_stats['ENERGY']['price'] <= self.player_info['energy'] <= 500:
+            if self.getEmptyLaneNumber() != -1:
+                i = self.getEmptyLaneNumber()
+                x_list = self.getUnOccupied(self.player_buildings[i])
+                self.buildEnergy(x_list, i)
+                return
+            for i, lane in enumerate(self.player_buildings):
+                x_list = self.getUnOccupied(lane)
+                if len(x_list) > 0:
+                    self.buildEnergy(x_list, i)
+                    return
+        elif self.buildings_stats['ATTACK']['price'] <= self.player_info['energy']:
+            for i, lane in enumerate(self.player_buildings):
+                x_list = self.getUnOccupied(lane)
+                if len(x_list) > 0:
+                    self.buildAttack(x_list, i)
+                    return
+        self.writeDoNothing()
 
     def writeCommand(self, x, y, building):
         '''
