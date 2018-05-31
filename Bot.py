@@ -307,7 +307,7 @@ class StarterBot:
         '''
         command in form : x,y,building_type
         '''
-        outfl = open('command.txt', 'w')
+        outfl = open('command.txt', 'w+')
         outfl.write(','.join([str(x), str(y), str(building)]))
         outfl.close()
         return None
@@ -316,7 +316,7 @@ class StarterBot:
         '''
         command in form : x,y,building_type
         '''
-        outfl = open('command.txt', 'w')
+        outfl = open('command.txt', 'w+')
         outfl.write("")
         outfl.close()
         return None
