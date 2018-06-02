@@ -275,7 +275,7 @@ class StarterBot:
         self.writeCommand(x, y, 0)
 
     def buildAttack(self, x_list, y):
-        x = min(x_list)
+        x = max(x_list)
         self.writeCommand(x, y, 1)
 
     def buildEnergy(self, x_list, y):
