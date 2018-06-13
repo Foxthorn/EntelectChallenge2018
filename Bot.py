@@ -250,15 +250,41 @@ class StarterBot:
         Returns index of all unoccupied cells in a lane
         '''
         indexes = []
-        for i in range(len(lane)):
-            if lane[i] == 0:
+        for i, place in enumerate(lane):
+            if place == 0:
                 indexes.append(i)
 
         return indexes
 
+
+    def getLaneWithFewestBuilding(self, building):
+        lowest_lane = []
+        low = self.columns / 2
+        lane_number = 0;
+        for i, lane in enumerate(self.player_buildings):
+            count = 0
+            for place in lane:
+                if place == building:
+                    count += 1
+            if count < low:
+                if self.getNumEmptySpace(self.player_buildings[i]) > 0:
+                    low = count
+                    lowest_lane = self.player_buildings[i]
+                    lane_number = i
+
+        return lane_number
+
+    def getNumEmptySpace(self, lane):
+        count = 0
+        for place in lane:
+            if place == 0:
+                count += 1
+        return count
+
+
     def getEmptyLaneNumber(self):
         for i, lane in enumerate(self.player_buildings):
-            if len(self.getUnOccupied(lane)) == 4:
+            if len(self.getUnOccupied(lane)) == self.columns / 2:
                 return i
         return -1
 
@@ -298,13 +324,14 @@ class StarterBot:
             if self.getEmptyLaneNumber() != -1:
                 i = self.getEmptyLaneNumber()
                 x_list = self.getUnOccupied(self.player_buildings[i])
-                self.buildEnergy(x_list, i)
+                lane_number = self.getLaneWithFewestBuilding(3)
+                self.buildEnergy(x_list, lane_number)
                 return
-            for i, lane in enumerate(self.player_buildings):
-                x_list = self.getUnOccupied(lane)
-                if len(x_list) > 0:
-                    self.buildEnergy(x_list, i)
-                    return
+            lane_number = self.getLaneWithFewestBuilding(3)
+            x_list = self.getUnOccupied(self.player_buildings[lane_number])
+            if len(x_list) > 0:
+                self.buildEnergy(x_list, lane_number)
+                return
         elif self.buildings_stats['ATTACK']['price'] <= self.player_info['energy']:
             for i, lane in enumerate(self.player_buildings):
                 x_list = self.getUnOccupied(lane)
