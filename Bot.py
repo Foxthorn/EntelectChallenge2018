@@ -322,6 +322,10 @@ class StarterBot:
         x = max(x_list)
         self.writeCommand(x, y, 1)
 
+    def buildMinAttack(self, x_list, y):
+        x = min(x_list)
+        self.writeCommand(x, y, 1)
+
     def buildEnergy(self, x_list, y):
         x = min(x_list)
         self.writeCommand(x, y, 2)
@@ -342,7 +346,7 @@ class StarterBot:
                     if self.checkMyDefense(i) is True and self.numBuildingsInRowPlayer(i, 1) == 0:
                         empty = self.getUnOccupied(lane)
                         empty.sort(reverse=True)
-                        x_list.append(empty[0])
+                        x_list.append(empty[1])
                         self.buildAttack(x_list, i)
                         return
             place = []
