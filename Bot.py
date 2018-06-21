@@ -314,6 +314,14 @@ class StarterBot:
             max += round(num_attack / 3)
         return max
 
+    def getXValueBehindDefence(self, empty, lane):
+        x_defence = lane.index(2)
+        empty.sort(reverse=True)
+        for x in empty:
+            if x < x_defence:
+                return x
+        return min(empty)
+
     def buildDefense(self, x_list, y):
         x = max(x_list)
         self.writeCommand(x, y, 0)
@@ -342,13 +350,12 @@ class StarterBot:
         if self.player_info['energy'] >= self.buildings_stats['DEFENSE']['price']:
             x_list = []
             for i, lane in enumerate(self.player_buildings):
-                if self.checkDefense(i) is False:
-                    if self.checkMyDefense(i) is True and self.numBuildingsInRowPlayer(i, 1) == 0:
-                        empty = self.getUnOccupied(lane)
-                        empty.sort(reverse=True)
-                        x_list.append(empty[1])
-                        self.buildAttack(x_list, i)
-                        return
+                if self.checkMyDefense(i) is True and self.numBuildingsInRowPlayer(i, 1) == 0:
+                    empty = self.getUnOccupied(lane)
+                    x = self.getXValueBehindDefence(empty, lane)
+                    x_list.append(x)
+                    self.buildAttack(x_list, i)
+                    return
             place = []
             y = 0
             most_attacks = 0
