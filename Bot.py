@@ -519,86 +519,57 @@ class StarterBot:
         return
 
     def player_favoured_attack(self):
-        for i, lane in enumerate(self.player_buildings):
-            if self.checkMyDefense(i) and self.checkMyAttack(i) is False and 0 in lane:
-                x_list = self.getUnOccupied(lane)
+        lanes = self.getLaneWithMostBuildingsOpponent(3)
+        for i in lanes:
+            x_list = self.getUnOccupied(self.player_buildings[i])
+            if len(x_list) > 0:
+                if self.numBuildingsInRowPlayer(i, 1) <= self.numBuildingsInRowEnemy(i, 3):
+                    self.buildAttack(x_list, i)
+                    return
+        lanes = self.getLaneWithFewestBuildings(3)
+        for i in lanes:
+            x_list = self.getUnOccupied(self.player_buildings[i])
+            if len(x_list) > 0:
                 self.buildAttack(x_list, i)
                 return
-        i = 0
-        lane_number = self.getLaneWithMostBuildingsOpponent(3)
-        x_list = []
-        for j in enumerate(lane_number):
-            i = random.choice(lane_number)
-            x_list = self.getUnOccupied(self.player_buildings[i])
-            if len(x_list) != 0 and self.player_buildings[i].count(1) <= self.opponent_buildings[i].count(3):
-                break
-        if self.checkMyDefense(i):
-            temp = self.getXValueBehindDefence(self.player_buildings[i])
-            if len(temp) > 0:
-                x_list = temp
-        if len(x_list) > 0:
-            self.buildAttack(x_list, i)
-        else:
-            self.opponent_favoured_attack()
-
-    def player_favoured_defence(self):
-        for i, lane in enumerate(self.player_buildings):
-            if self.checkMyAttack(i) and self.checkAttack(i):
-                if self.numBuildingsInRowPlayer(i, 2) < self.getMaxDefence(i) and self.numBuildingsInRowEnemy(i,
-                                                                                                              1) >= 2:
-                    x_list = self.getUnOccupied(lane)
-                    self.buildDefense(x_list, i)
-                    return
-        if self.player_info['energy'] >= self.buildings_stats['ATTACK']['price']:
-            self.player_favoured_attack()
-
-    # IMPROVE LANE SELECTION
-
-    def opponent_favoured_defence(self):
-        max_attack = 0
-        i = -1
-        for j, lane in enumerate(self.player_buildings):
-            value = self.numBuildingsInRowEnemy(j, 1)
-            if value > self.numBuildingsInRowPlayer(j, 1) and value != 1:
-                if value >= max_attack and self.numBuildingsInRowPlayer(j, 2) < self.getMaxDefence(j):
-                    max_attack = value
-                    i = j
-        if i != -1:
-            x_list = self.getUnOccupied(self.player_buildings[i])
-            self.buildDefense(x_list, i)
-            return
-        else:
-            self.opponent_favoured_attack()
+        self.opponent_favoured_attack()
 
     def opponent_favoured_attack(self):
-        for i, lane in enumerate(self.player_buildings):
-            if self.checkMyAttack(i) is False:
-                x_list = self.getUnOccupied(lane)
+        lanes = self.getLaneWithMostBuildingsOpponent(1)
+        for i in lanes:
+            x_list = self.getUnOccupied(self.player_buildings[i])
+            if len(x_list) > 0:
                 self.buildMinAttack(x_list, i)
                 return
-        highest = 0
-        lanes = []
-        for i, lane in enumerate(self.player_buildings):
-            num_attack = self.numBuildingsInRowEnemy(i, 1)
-            num_my_attack = self.numBuildingsInRowPlayer(i, 1)
-            if num_attack - num_my_attack > highest and 0 in lane:
-                lanes.clear()
-                lanes.append(i)
-                highest = num_attack - num_my_attack
-            elif num_attack - num_my_attack == highest and 0 in lane:
-                lanes.append(i)
-        i = random.choice(lanes)
-        x_list = self.getUnOccupied(self.player_buildings[i])
-        self.buildMinAttack(x_list, i)
+        for i, lane in self.player_buildings:
+            x_list = self.getUnOccupied(lane)
+            if self.checkMyDefense(i) and self.checkMyAttack(i) is False:
+                if len(x_list) > 0:
+                    if self.numBuildingsInRowPlayer(i, 1) <= self.numBuildingsInRowEnemy(i, 1):
+                        self.buildAttack(x_list, i)
+                        return
+        self.defence_logic()
 
-    # END
+    def defence_logic(self):
+        lanes = self.getLaneWithMostBuildingsOpponent(1)
+        for i in lanes:
+            x_list = self.getUnOccupied(self.player_buildings[i])
+            if len(x_list) > 0:
+                self.buildDefense(x_list, i)
+                return
+        for i, lane in enumerate(self.player_buildings):
+            x_list = self.getUnOccupied(lane)
+            if self.checkAttack(i) and self.numBuildingsInRowPlayer(i, 2) < self.getMaxDefence(i):
+                if len(x_list) > 0:
+                    self.buildDefense(x_list, i)
+                    return
 
     def generateAction(self):
         if self.checkIfBoardIsFull():
             self.writeDoNothing()
             return
         self.getBoardState()
-        print(self.buildings_stats)
+        print(self.player_info)
         if self.player_info['energy'] >= 100 and self.player_info['ironCurtainAvailable'] is True:
             self.buildIronCurtain()
             return
@@ -606,21 +577,22 @@ class StarterBot:
             if self.player_info['energy'] >= self.buildings_stats['ATTACK']['price']:
                 self.player_favoured_attack()
         if self.board_state == BoardState.EVEN:
-            if self.player_info['energy'] >= self.buildings_stats['ENERGY']['price']:
+            if self.player_info['energy'] >= self.buildings_stats['ATTACK']['price']:
+                self.player_favoured_attack()
+            elif self.player_info['energy'] >= self.buildings_stats['ENERGY']['price']:
                 self.energyLogic()
         if self.board_state == BoardState.PLAYER_FAVOURED:
             if self.player_info['energy'] >= self.buildings_stats['TESLA']['price']:
                 self.teslaLogic()
-            elif self.player_info['energy'] >= self.buildings_stats['DEFENSE']['price']:
-                self.player_favoured_defence()
+            elif self.player_info['energy'] >= self.buildings_stats['ATTACK']['price']:
+                self.player_favoured_attack()
             elif self.player_info['energy'] >= self.buildings_stats['ENERGY']['price']:
                 self.energyLogic()
         if self.board_state == BoardState.OPPONENT_FAVOURED:
-            if self.player_info['energy'] >= self.buildings_stats['DEFENSE']['price']:
-                self.opponent_favoured_defence()
+            if self.player_info['energy'] >= self.buildings_stats['ATTACK']['price']:
+                self.opponent_favoured_attack()
             elif self.player_info['energy'] >= self.buildings_stats['ENERGY']['price']:
                 self.energyLogic()
-
         if not self.move_made:
             self.writeDoNothing()
 
@@ -629,8 +601,6 @@ class StarterBot:
         command in form : x,y,building_type
         """
         outfl = open('command.txt', 'w+')
-        log = open('logs.txt', 'a')
-        log.write(str(self.round) + " : " + ','.join([str(x), str(y), str(building)]) + '\n')
         outfl.write(','.join([str(x), str(y), str(building)]))
         outfl.close()
         return None
@@ -639,8 +609,6 @@ class StarterBot:
         """
         command in form : x,y,building_type
         """
-        log = open('logs.txt', 'a')
-        log.write('Did nothing\n')
         outfl = open('command.txt', 'w+')
         outfl.write("")
         outfl.close()
